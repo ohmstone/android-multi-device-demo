@@ -3,6 +3,7 @@ mod render_loop;
 mod app_loop;
 mod get_window;
 mod handle_input;
+mod ws_server;
 use crate::app_loop::app_loop;
 
 

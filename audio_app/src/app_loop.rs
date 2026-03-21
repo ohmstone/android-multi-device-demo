@@ -6,18 +6,17 @@ use crate::get_window::get_window;
 
 pub fn app_loop(app: &AndroidApp) {
 
-    let mut quit = false;
-
     info!("App Loop START");
 
-    while !quit {
+    loop {
         let window = get_window(app);
         let exit_reason = render_loop(app, &window);
+        // FIXME in some cases we recover, hence the loop
         match exit_reason {
-            1 => { quit = true; } // pause
-            2 => { quit = true; } // terminated window
-            3 => { quit = true; } // destroy
-            _ => { quit = true; } // any thing else
+            1 => { break; } // pause
+            2 => { break; } // terminated window
+            3 => { break; } // destroy
+            _ => { break; } // any thing else
         }
     }
 
