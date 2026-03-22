@@ -2,7 +2,7 @@
 set -e
 
 
-PACKAGE="one.ohmst.demo1.audioapp"
+PACKAGE="one.ohmst.demo1.ctrlapp"
 SCRIPT_DIR="${0:A:h}"
 MAX_RETRIES=5
 SLEEP_SEC=1
