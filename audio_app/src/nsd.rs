@@ -36,38 +36,37 @@ fn nsd(pkg_name: String, env: &mut JNIEnv<'_>, rx: Receiver<NsdCommand>) {
 
     // generic per class
     
-    let context = APP_CONTEXT.get().unwrap().as_obj();
-    let ctx_obj = JValue::Object(context);
+    let instance = {
+        let ctx_guard = APP_CONTEXT.get().unwrap().lock().unwrap();
+        let context = ctx_guard.as_ref().unwrap().as_obj();
+        let ctx_obj = JValue::Object(context);
 
-    let class_loader = env
-        .call_method(
-            context,
-            "getClassLoader",
-            "()Ljava/lang/ClassLoader;",
-            &[],
-        )
-        .unwrap()
-        .l()
-        .unwrap();
-    let class_name = env
-        .new_string(class_name_path)
-        .unwrap();
-    let class_obj = env
-        .call_method(
-            class_loader,
-            "loadClass",
-            "(Ljava/lang/String;)Ljava/lang/Class;",
-            &[JValue::Object(&class_name.into())],
-        )
-        .unwrap()
-        .l()
-        .unwrap();
-    let class_ref = JClass::from(class_obj);
-
-    // varies per class
-    let instance = env
-        .new_object(class_ref, ctor_sig, &[ctx_obj])
-        .unwrap();
+        let class_loader = env
+            .call_method(
+                context,
+                "getClassLoader",
+                "()Ljava/lang/ClassLoader;",
+                &[],
+            )
+            .unwrap()
+            .l()
+            .unwrap();
+        let class_name = env
+            .new_string(class_name_path)
+            .unwrap();
+        let class_obj = env
+            .call_method(
+                class_loader,
+                "loadClass",
+                "(Ljava/lang/String;)Ljava/lang/Class;",
+                &[JValue::Object(&class_name.into())],
+            )
+            .unwrap()
+            .l()
+            .unwrap();
+        let class_ref = JClass::from(class_obj);
+        env.new_object(class_ref, ctor_sig, &[ctx_obj]).unwrap()
+    };
     let instance_ref = instance.as_ref();
 
     let mut start = |port: u16, service_name: String, env: &mut JNIEnv<'_>, instance: &JObject<'_>| {

@@ -52,10 +52,12 @@ pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
                         // Demo ability to affect app via ws
                         tx_in_ws.send(InWsServerCmd::Close).ok();
                         ws_handle.join().ok();
+                        tx_nsd.send(NsdCommand::Stop).ok();
+                        nsd_handle.join().ok();
                         return 100;
                     }
                     if msg.starts_with("echo") {
-                        tx_in_ws.send(InWsServerCmd::Message(msg.to_string()));
+                        tx_in_ws.send(InWsServerCmd::Message(msg.to_string())).ok();
                     }
                 }
                 OutWsServerCmd::Ready(port) => {

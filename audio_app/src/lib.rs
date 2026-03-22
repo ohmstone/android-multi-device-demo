@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use android_activity::{ AndroidApp };
 mod render_loop;
 mod app_loop;
@@ -16,4 +18,5 @@ fn android_main(app: AndroidApp) {
     log::info!("App is OPEN");
     app_loop(&app);
     log::info!("App will CLOSE");
+    exit(0);
 }
