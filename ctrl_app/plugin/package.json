@@ -1,0 +1,14 @@
+{
+  "name": "cordova-plugin-nsd-discovery",
+  "version": "1.0.0",
+  "description": "Android NSD (mDNS) service discovery plugin for Cordova",
+  "cordova": {
+    "id": "cordova-plugin-nsd-discovery",
+    "platforms": ["android"]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "license": "Apache-2.0"
+}

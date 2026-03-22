@@ -1,50 +1,51 @@
 <!DOCTYPE html>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+<meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+    <link rel="stylesheet" href="css/index.css">
+    <title>CtrlApp</title>
+</head>
+<body>
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    <!-- ── Searching state ───────────────────────────────────────────────── -->
+    <div id="screen-searching" class="screen active">
+        <div class="pulse-ring"></div>
+        <p class="status-label">Searching for<br><span class="service-name">AudioAppWS</span></p>
+        <p class="status-sub">Scanning local network…</p>
+    </div>
 
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
-<html>
-    <head>
-        <meta charset="utf-8">
-        <!--
-        Customize this policy to fit your own app's needs. For more guidance, please refer to the docs:
-            https://cordova.apache.org/docs/en/latest/
-        Some notes:
-            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
-            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
-                * Enable inline JS: add 'unsafe-inline' to default-src
-        -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
-        <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-tap-highlight" content="no">
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
-        <meta name="color-scheme" content="light dark">
-        <link rel="stylesheet" href="css/index.css">
-        <title>Hello World</title>
-    </head>
-    <body>
-        <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
-            </div>
+    <!-- ── Found / connecting state ──────────────────────────────────────── -->
+    <div id="screen-found" class="screen">
+        <div class="spinner"></div>
+        <p class="status-label">Found service</p>
+        <p id="found-addr" class="status-sub"></p>
+        <p class="status-sub">Connecting…</p>
+    </div>
+
+    <!-- ── Connected / chat state ────────────────────────────────────────── -->
+    <div id="screen-connected" class="screen">
+        <div id="chat-header">
+            <span id="conn-addr"></span>
+            <button id="btn-disconnect">Disconnect</button>
         </div>
-        <script src="cordova.js"></script>
-        <script src="js/index.js"></script>
-    </body>
+        <div id="log"></div>
+        <div id="input-row">
+            <textarea id="msg-input" rows="1" placeholder="Type a message…"></textarea>
+            <button id="btn-send">Send</button>
+        </div>
+    </div>
+
+    <!-- ── Error state ────────────────────────────────────────────────────── -->
+    <div id="screen-error" class="screen">
+        <p class="status-label error-text">Error</p>
+        <p id="error-detail" class="status-sub"></p>
+        <button id="btn-retry">Retry</button>
+    </div>
+
+    <script src="cordova.js"></script>
+    <script src="js/index.js"></script>
+</body>
 </html>

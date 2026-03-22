@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        id="cordova-plugin-nsd-discovery"
+        version="1.0.0">
+
+    <name>NSD Discovery</name>
+    <description>Android NSD (mDNS) service discovery plugin for Cordova</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,nsd,mdns,discovery</keywords>
+
+    <!-- JavaScript interface exposed to the webapp -->
+    <js-module src="www/NsdDiscovery.js" name="NsdDiscovery">
+        <clobbers target="NsdDiscovery" />
+    </js-module>
+
+    <platform name="android">
+
+        <!-- Register the plugin feature in Cordova's platform config -->
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="NsdDiscovery">
+                <param name="android-package"
+                       value="one.ohmst.demo1.ctrlapp.NsdDiscoveryPlugin"/>
+            </feature>
+        </config-file>
+
+        <!-- Required permissions -->
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+        </config-file>
+
+        <!-- Java source file -->
+        <source-file src="src/android/NsdDiscoveryPlugin.java"
+                     target-dir="app/src/main/java/one/ohmst/demo1/ctrlapp"/>
+
+    </platform>
+
+</plugin>

@@ -1,13 +1,35 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="one.ohmst.demo1.ctrlapp" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="one.ohmst.demo1.ctrlapp" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+
     <name>CtrlApp</name>
-    <description>
-        A sample Apache Cordova application that responds to the deviceready event.
-    </description>
+    <description>Control app — discovers AudioAppWS on the local network and connects via WebSocket.</description>
     <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
         Apache Cordova Team
     </author>
+
     <content src="index.html" />
+
+    <!-- Use http so ws:// connections aren't blocked as mixed content -->
+    <preference name="scheme" value="http" />
+
+    <!-- NSD Discovery plugin (local) -->
+    <plugin name="cordova-plugin-nsd-discovery" spec="plugin" />
+
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
+    <!-- Allow WebSocket connections to any local host -->
+    <allow-navigation href="ws://*/*" />
+
+    <platform name="android">
+        <!-- Allow cleartext ws:// traffic (blocked by default on Android 9+) -->
+        <edit-config file="app/src/main/AndroidManifest.xml"
+                     target="/manifest/application"
+                     mode="merge">
+            <application android:usesCleartextTraffic="true"
+                         xmlns:android="http://schemas.android.com/apk/res/android" />
+        </edit-config>
+    </platform>
+
 </widget>
