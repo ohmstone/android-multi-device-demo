@@ -1,19 +1,17 @@
 package one.ohmst.demo1.audioapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
-
 import android.app.NativeActivity;
-
-import android.os.Bundle;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 public class MainActivity extends NativeActivity {
 
@@ -61,10 +59,13 @@ public class MainActivity extends NativeActivity {
         // super.setImeEditorInfoFields(InputType.TYPE_CLASS_TEXT,
         //     IME_ACTION_NONE, IME_FLAG_NO_FULLSCREEN );
         super.onCreate(savedInstanceState);
+        nativeInit(this);
     }
 
     protected void onResume() {
         super.onResume();
         hideSystemUI();
     }
+
+    private static native void nativeInit(Context context);
 }

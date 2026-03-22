@@ -1,21 +1,54 @@
-#!/usr/bin/env node
 'use strict';
 
 const net    = require('net');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
 
-const [,, IP, PORT_STR] = process.argv;
-if (!IP || !PORT_STR) {
-  process.stderr.write('Usage: node ws_client.js <IP> <PORT>\n');
-  process.exit(1);
+const SERVICE_NAME = 'AudioAppWS';
+
+// ── Service discovery ─────────────────────────────────────────────────────────
+
+function discoverService(callback) {
+  const proc = spawn('avahi-browse', ['-t', '-p', '-v', '-r', '_http._tcp']);
+  const chunks = [];
+
+  proc.stdout.on('readable', () => {
+    let chunk;
+    while (null !== (chunk = proc.stdout.read())) chunks.push(chunk);
+  });
+
+  proc.stdout.on('end', () => {
+    const lines = chunks.join('').split('\n');
+    for (const line of lines) {
+      const data = line.split(';');
+      let is_service = false;
+      let host = '';
+      let port = 0;
+      for (const d of data) {
+        if (host) {
+          try {
+            const p = parseInt(d, 10);
+            if (!isNaN(p) && p > 1000 && p < 0xffff) port = p;
+          } catch { continue; }
+        }
+        if (is_service) {
+          if (d.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)) { host = d; continue; }
+        } else {
+          if (d === SERVICE_NAME) { is_service = true; continue; }
+        }
+      }
+      if (is_service && host && port) return callback(null, host, port);
+    }
+    callback(new Error(`Service "${SERVICE_NAME}" not found via avahi-browse`));
+  });
+
+  proc.on('error', (err) => callback(new Error(`avahi-browse failed: ${err.message}`)));
 }
-const PORT = parseInt(PORT_STR, 10);
 
 // ── WebSocket helpers ─────────────────────────────────────────────────────────
 
 function wsKey() { return crypto.randomBytes(16).toString('base64'); }
 
-/** Encode a text frame with masking (client→server requirement). */
 function encodeTextFrame(text) {
   const payload = Buffer.from(text, 'utf8');
   const len = payload.length;
@@ -39,7 +72,6 @@ function encodeTextFrame(text) {
   return Buffer.concat([hdr, masked]);
 }
 
-/** Encode a pong frame with masking. */
 function encodePongFrame(data) {
   const len = data.length;
   const mask = crypto.randomBytes(4);
@@ -49,7 +81,6 @@ function encodePongFrame(data) {
   return Buffer.concat([hdr, masked]);
 }
 
-/** Returns a stateful feed(chunk) function that calls onText / onPing per frame. */
 function makeFrameParser(onText, onPing) {
   let buf = Buffer.alloc(0);
   return function feed(chunk) {
@@ -81,14 +112,12 @@ function makeFrameParser(onText, onPing) {
 
       if      (opcode === 1) onText(payload.toString('utf8'));
       else if (opcode === 9) onPing(payload);
-      // opcode 8 = close, 2 = binary — ignored for this client
     }
   };
 }
 
 // ── Display helpers ───────────────────────────────────────────────────────────
 
-/** Format a (possibly multi-line) message for printing. */
 function fmtMsg(tag, msg) {
   return msg.split('\n')
     .map((l, i) => (i === 0 ? `${tag}: ${l}` : `    ... ${l}`))
@@ -99,16 +128,14 @@ function fmtMsg(tag, msg) {
 
 const PROMPT = '> ';
 
-let draftLines    = [''];  // lines composing the current outgoing message
-let renderedLines = 1;     // how many terminal rows the input area occupies
+let draftLines    = [''];
+let renderedLines = 1;
 
-/** Erase the rendered input area, leaving the cursor at the beginning of its first row. */
 function clearInput() {
   if (renderedLines > 1) process.stdout.write(`\x1b[${renderedLines - 1}A`);
   process.stdout.write('\r\x1b[J');
 }
 
-/** (Re-)draw the input area and record how many rows it occupies. */
 function renderInput() {
   process.stdout.write(
     draftLines.map((l, i) => (i === 0 ? PROMPT : '  ') + l).join('\n')
@@ -116,7 +143,6 @@ function renderInput() {
   renderedLines = draftLines.length;
 }
 
-/** Print a log line above the input area without disturbing what the user is typing. */
 function printLine(text) {
   clearInput();
   process.stdout.write(text + '\n');
@@ -125,12 +151,11 @@ function printLine(text) {
 
 // ── Key handling ──────────────────────────────────────────────────────────────
 
-let sendFn = null; // wired up once the socket is ready
+let sendFn = null;
 
 function handleKey(raw) {
   const s = raw.toString('utf8');
 
-  // Ctrl+S → send the draft
   if (s === '\x13') {
     if (draftLines.some(l => l.length > 0)) {
       const msg = draftLines.join('\n');
@@ -143,10 +168,8 @@ function handleKey(raw) {
     return;
   }
 
-  // Ignore other escape sequences (arrows, F-keys, …)
   if (s.startsWith('\x1b')) return;
 
-  // Enter → newline in draft
   if (s === '\r' || s === '\n') {
     clearInput();
     draftLines.push('');
@@ -154,12 +177,11 @@ function handleKey(raw) {
     return;
   }
 
-  // Backspace
   if (s === '\x7f' || s === '\x08') {
     const last = draftLines[draftLines.length - 1];
     if (last.length > 0) {
       draftLines[draftLines.length - 1] = last.slice(0, -1);
-      process.stdout.write('\b \b'); // erase one character in-place
+      process.stdout.write('\b \b');
     } else if (draftLines.length > 1) {
       clearInput();
       draftLines.pop();
@@ -168,7 +190,6 @@ function handleKey(raw) {
     return;
   }
 
-  // Printable character — append and echo directly (avoids full redraw)
   draftLines[draftLines.length - 1] += s;
   process.stdout.write(s);
 }
@@ -189,7 +210,6 @@ if (!process.stdin.isTTY) {
 
 process.stdin.setRawMode(true);
 process.stdin.resume();
-// No special terminal modes needed — send key is Ctrl+S (\x13), universally reliable
 
 let connected = false;
 process.stdin.on('data', (raw) => {
@@ -198,80 +218,88 @@ process.stdin.on('data', (raw) => {
   if (connected) handleKey(raw);
 });
 
-// ── WebSocket connection ──────────────────────────────────────────────────────
+// ── Discover then connect ─────────────────────────────────────────────────────
 
-process.stdout.write(`Connecting to ws://${IP}:${PORT}...\n`);
+process.stdout.write(`Discovering "${SERVICE_NAME}" via avahi-browse...\n`);
 
-const CONNECT_TIMEOUT_MS = 5000;
-const connectTimer = setTimeout(() => {
-  cleanup();
-  process.stderr.write(`Connection timed out after ${CONNECT_TIMEOUT_MS / 1000}s\n`);
-  process.exit(1);
-}, CONNECT_TIMEOUT_MS);
-
-const key    = wsKey();
-const socket = net.createConnection(PORT, IP, () => {
-  clearTimeout(connectTimer);
-  socket.write(
-    `GET / HTTP/1.1\r\n` +
-    `Host: ${IP}:${PORT}\r\n` +
-    `Upgrade: websocket\r\n` +
-    `Connection: Upgrade\r\n` +
-    `Sec-WebSocket-Key: ${key}\r\n` +
-    `Sec-WebSocket-Version: 13\r\n` +
-    `\r\n`
-  );
-});
-
-sendFn = (msg) => socket.write(encodeTextFrame(msg));
-
-const feedFrame = makeFrameParser(
-  (text) => printLine(fmtMsg('[RECV]', text)),
-  (data) => socket.write(encodePongFrame(data))
-);
-
-// Accumulate bytes until the HTTP/101 response header is fully received,
-// then hand off remaining bytes to the frame parser.
-let hsBuf  = Buffer.alloc(0);
-let hsDone = false;
-
-socket.on('data', (chunk) => {
-  if (hsDone) { feedFrame(chunk); return; }
-
-  hsBuf = Buffer.concat([hsBuf, chunk]);
-
-  // Look for the blank line ending the HTTP header (\r\n\r\n)
-  let sepAt = -1;
-  for (let i = 0; i <= hsBuf.length - 4; i++) {
-    if (hsBuf[i] === 13 && hsBuf[i+1] === 10 && hsBuf[i+2] === 13 && hsBuf[i+3] === 10) {
-      sepAt = i; break;
-    }
-  }
-  if (sepAt === -1) return; // header not complete yet
-
-  if (!hsBuf.slice(0, sepAt).toString('utf8').includes('101')) {
+discoverService((err, IP, PORT) => {
+  if (err) {
     cleanup();
-    process.stderr.write('WebSocket handshake failed\n');
+    process.stderr.write(`Discovery failed: ${err.message}\n`);
     process.exit(1);
   }
 
-  hsDone    = true;
-  connected = true;
-  process.stdout.write(`Connected to ws://${IP}:${PORT}  (Enter = newline, Ctrl+S = send)\n`);
-  renderInput();
+  process.stdout.write(`Found service at ${IP}:${PORT}\n`);
+  process.stdout.write(`Connecting to ws://${IP}:${PORT}...\n`);
 
-  const rest = hsBuf.slice(sepAt + 4);
-  if (rest.length > 0) feedFrame(rest);
-});
+  const CONNECT_TIMEOUT_MS = 5000;
+  const connectTimer = setTimeout(() => {
+    cleanup();
+    process.stderr.write(`Connection timed out after ${CONNECT_TIMEOUT_MS / 1000}s\n`);
+    process.exit(1);
+  }, CONNECT_TIMEOUT_MS);
 
-socket.on('error', (err) => {
-  cleanup();
-  process.stderr.write(`\nConnection error: ${err.message}\n`);
-  process.exit(1);
-});
+  const key    = wsKey();
+  const socket = net.createConnection(PORT, IP, () => {
+    clearTimeout(connectTimer);
+    socket.write(
+      `GET / HTTP/1.1\r\n` +
+      `Host: ${IP}:${PORT}\r\n` +
+      `Upgrade: websocket\r\n` +
+      `Connection: Upgrade\r\n` +
+      `Sec-WebSocket-Key: ${key}\r\n` +
+      `Sec-WebSocket-Version: 13\r\n` +
+      `\r\n`
+    );
+  });
 
-socket.on('close', () => {
-  cleanup();
-  process.stdout.write('\nDisconnected.\n');
-  process.exit(0);
+  sendFn = (msg) => socket.write(encodeTextFrame(msg));
+
+  const feedFrame = makeFrameParser(
+    (text) => printLine(fmtMsg('[RECV]', text)),
+    (data) => socket.write(encodePongFrame(data))
+  );
+
+  let hsBuf  = Buffer.alloc(0);
+  let hsDone = false;
+
+  socket.on('data', (chunk) => {
+    if (hsDone) { feedFrame(chunk); return; }
+
+    hsBuf = Buffer.concat([hsBuf, chunk]);
+
+    let sepAt = -1;
+    for (let i = 0; i <= hsBuf.length - 4; i++) {
+      if (hsBuf[i] === 13 && hsBuf[i+1] === 10 && hsBuf[i+2] === 13 && hsBuf[i+3] === 10) {
+        sepAt = i; break;
+      }
+    }
+    if (sepAt === -1) return;
+
+    if (!hsBuf.slice(0, sepAt).toString('utf8').includes('101')) {
+      cleanup();
+      process.stderr.write('WebSocket handshake failed\n');
+      process.exit(1);
+    }
+
+    hsDone    = true;
+    connected = true;
+    process.stdout.write(`Connected to ws://${IP}:${PORT}  (Enter = newline, Ctrl+S = send)\n`);
+    renderInput();
+
+    const rest = hsBuf.slice(sepAt + 4);
+    if (rest.length > 0) feedFrame(rest);
+  });
+
+  socket.on('error', (err) => {
+    cleanup();
+    process.stderr.write(`\nConnection error: ${err.message}\n`);
+    process.exit(1);
+  });
+
+  socket.on('close', () => {
+    cleanup();
+    process.stdout.write('\nDisconnected.\n');
+    process.exit(0);
+  });
 });

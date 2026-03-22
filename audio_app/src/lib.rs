@@ -4,6 +4,8 @@ mod app_loop;
 mod get_window;
 mod handle_input;
 mod ws_server;
+mod native_init;
+mod nsd;
 use crate::app_loop::app_loop;
 
 
