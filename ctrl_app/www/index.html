@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
-    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no">
     <link rel="stylesheet" href="css/index.css">
     <title>CtrlApp</title>
 </head>
@@ -25,16 +25,18 @@
         <p class="status-sub">Connecting…</p>
     </div>
 
-    <!-- ── Connected / chat state ────────────────────────────────────────── -->
+    <!-- ── Connected / rotary state ──────────────────────────────────────── -->
     <div id="screen-connected" class="screen">
-        <div id="chat-header">
-            <span id="conn-addr"></span>
-            <button id="btn-disconnect">Disconnect</button>
+        <div id="canvas-wrap">
+            <canvas id="input-canvas"></canvas>
         </div>
-        <div id="log"></div>
-        <div id="input-row">
-            <textarea id="msg-input" rows="1" placeholder="Type a message…"></textarea>
-            <button id="btn-send">Send</button>
+        <div id="panel">
+            <div id="panel-label">encoder value</div>
+            <div id="panel-value">
+                <span id="indicator"></span>
+                <span id="value-display">0</span>
+                <span id="delta-display"></span>
+            </div>
         </div>
     </div>
 
@@ -45,7 +47,14 @@
         <button id="btn-retry">Retry</button>
     </div>
 
+    <script>
+        // Resolved once cv.onRuntimeInitialized fires; awaited before any cv call.
+        window.cvReady = new Promise(resolve => {
+            window.onOpenCvReady = () => { cv.onRuntimeInitialized = resolve }
+        })
+    </script>
     <script src="cordova.js"></script>
-    <script src="js/index.js"></script>
+    <script async src="js/opencv_4.14.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <script type="module" src="js/index.js"></script>
 </body>
 </html>

@@ -11,6 +11,9 @@
 
     <content src="index.html" />
 
+    <!-- Hide status bar for full-screen immersive UI -->
+    <preference name="Fullscreen" value="true" />
+
     <!-- Use http so ws:// connections aren't blocked as mixed content -->
     <preference name="scheme" value="http" />
 
