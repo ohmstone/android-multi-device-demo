@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use android_activity::{
     AndroidApp, InputStatus, MainEvent, PollEvent,
-    input::{InputEvent, MotionAction, MotionEvent},
+    input::{InputEvent, Keycode, MotionAction, MotionEvent},
 };
 
 pub struct RawTouchEvent {
@@ -62,8 +62,15 @@ pub fn handle_input(
                                             }
                                             _ => {}
                                         }
+                                        InputStatus::Handled
+                                    } else if let InputEvent::KeyEvent(ke) = ev {
+                                        match ke.key_code() {
+                                            Keycode::VolumeUp | Keycode::VolumeDown => InputStatus::Unhandled,
+                                            _ => InputStatus::Handled
+                                        }
+                                    } else {
+                                        InputStatus::Handled
                                     }
-                                    InputStatus::Handled
                                 }) {
                                     break;
                                 }

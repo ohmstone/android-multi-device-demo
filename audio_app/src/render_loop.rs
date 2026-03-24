@@ -1,11 +1,12 @@
 use android_activity::{ AndroidApp };
-use std::{time::Duration};
+// use std::{time::Duration};   
 use ndk_sys::{timespec, clock_gettime, CLOCK_MONOTONIC};
 use log::info;
 use ndk::native_window::NativeWindow;
 use std::sync::mpsc::{channel};
 use std::thread::{self};
 
+use crate::audio_engine::audio_engine;
 use crate::handle_input::handle_input;
 use crate::nsd::{NsdCommand, run_nsd};
 use crate::ws_server::{InWsServerCmd, OutWsServerCmd, ws_server};
@@ -26,6 +27,9 @@ pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
     let ws_handle = thread::spawn(move || {
         ws_server(0, tx_out_ws, rx_in_ws);
     });
+
+    let mut freq: f32 = 100.0;
+    let audio = audio_engine();
     
     // Setup up render ctx, etc here
 
@@ -47,17 +51,14 @@ pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
                     info!("Received unhandled binary via ws, has {} bytes.", data.len());
                 }
                 OutWsServerCmd::Message(msg) => {
-                    info!("Received msg via ws:\n{}", msg);
-                    if msg.contains("exit") {
-                        // Demo ability to affect app via ws
-                        tx_in_ws.send(InWsServerCmd::Close).ok();
-                        ws_handle.join().ok();
-                        tx_nsd.send(NsdCommand::Stop).ok();
-                        nsd_handle.join().ok();
-                        return 100;
-                    }
-                    if msg.starts_with("echo") {
-                        tx_in_ws.send(InWsServerCmd::Message(msg.to_string())).ok();
+                    // info!("Received msg via ws:\n{}", msg);
+                    if let Some(delta) = msg.find("\"delta\":").and_then(|pos| {
+                        msg[pos + 8..].trim_start().split(|c: char| !c.is_ascii_digit() && c != '-').next()
+                            .and_then(|s| s.parse::<i32>().ok())
+                    }) {
+                        freq += delta as f32;
+                        audio.tx.send(crate::audio_engine::AudioCommand::SetFreq(freq)).ok();
+                        tx_in_ws.send(InWsServerCmd::Message(format!("{{\"value\": {}}}", freq))).ok();
                     }
                 }
                 OutWsServerCmd::Ready(port) => {

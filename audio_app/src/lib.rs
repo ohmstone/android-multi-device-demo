@@ -8,6 +8,7 @@ mod handle_input;
 mod ws_server;
 mod native_init;
 mod nsd;
+mod audio_engine;
 use crate::app_loop::app_loop;
 
 
