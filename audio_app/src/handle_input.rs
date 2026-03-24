@@ -6,10 +6,10 @@ use android_activity::{
 };
 
 pub struct RawTouchEvent {
-    pub pointer_id: i32,
-    pub action:     TouchAction,
-    pub nx: f32,
-    pub ny: f32,
+    pub _pointer_id: i32,
+    pub _action:     TouchAction,
+    pub _nx: f32,
+    pub _ny: f32,
 }
 
 pub enum TouchAction { Down, Move, Up }
@@ -25,10 +25,10 @@ pub fn handle_input(
     let mut push_touch = |motion: &MotionEvent<'_>, action: TouchAction| {
         let p = motion.pointer_at_index(motion.pointer_index());
         events.push(RawTouchEvent {
-            pointer_id: p.pointer_id(),
-            action,
-            nx: p.x() / width,
-            ny: p.y() / height,
+            _pointer_id: p.pointer_id(),
+            _action: action,
+            _nx: p.x() / width,
+            _ny: p.y() / height,
         });
     };
 

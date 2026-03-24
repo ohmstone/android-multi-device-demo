@@ -69,7 +69,7 @@ fn nsd(pkg_name: String, env: &mut JNIEnv<'_>, rx: Receiver<NsdCommand>) {
     };
     let instance_ref = instance.as_ref();
 
-    let mut start = |port: u16, service_name: String, env: &mut JNIEnv<'_>, instance: &JObject<'_>| {
+    let start = |port: u16, service_name: String, env: &mut JNIEnv<'_>, instance: &JObject<'_>| {
       let method_arg_service_name = service_name.as_str();
       let method_arg_port = port as i32;
       let method_name = "start";

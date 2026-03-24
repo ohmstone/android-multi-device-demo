@@ -9,6 +9,12 @@ mod ws_server;
 mod native_init;
 mod nsd;
 mod audio_engine;
+mod cstr_util;
+mod gl_ctx;
+mod gl_program;
+mod gl_shader;
+mod gl_type_util;
+mod ui_scene;
 use crate::app_loop::app_loop;
 
 

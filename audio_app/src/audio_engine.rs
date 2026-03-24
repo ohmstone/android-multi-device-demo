@@ -7,7 +7,7 @@ use oboe::{
 };
 
 pub struct AudioEngine {
-    pub device: AudioStreamAsync<Output, AudioProc>,
+    pub _device: AudioStreamAsync<Output, AudioProc>,
     pub tx: Sender<AudioCommand>,
 }
 
@@ -27,7 +27,7 @@ pub fn audio_engine() -> AudioEngine {
     audio_proc_out.start().unwrap();
 
     AudioEngine {
-        device: audio_proc_out,
+        _device: audio_proc_out,
         tx,
     }
 }

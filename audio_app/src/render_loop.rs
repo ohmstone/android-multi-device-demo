@@ -1,5 +1,4 @@
 use android_activity::{ AndroidApp };
-// use std::{time::Duration};   
 use ndk_sys::{timespec, clock_gettime, CLOCK_MONOTONIC};
 use log::info;
 use ndk::native_window::NativeWindow;
@@ -7,8 +6,10 @@ use std::sync::mpsc::{channel};
 use std::thread::{self};
 
 use crate::audio_engine::audio_engine;
+use crate::gl_ctx::gl_ctx;
 use crate::handle_input::handle_input;
 use crate::nsd::{NsdCommand, run_nsd};
+use crate::ui_scene::ui_scene;
 use crate::ws_server::{InWsServerCmd, OutWsServerCmd, ws_server};
 
 pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
@@ -31,12 +32,13 @@ pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
     let mut freq: f32 = 100.0;
     let audio = audio_engine();
     
-    // Setup up render ctx, etc here
+    let ctx = gl_ctx(window);
+    let ui = ui_scene(width, height);
 
     info!("Render loop START");
 
     loop {
-        let (exit, raw_events) = handle_input(app, w, h);
+        let (exit, _raw_events) = handle_input(app, w, h);
         if let Some(reason) = exit {
             tx_in_ws.send(InWsServerCmd::Close).ok();
             ws_handle.join().ok();
@@ -69,8 +71,10 @@ pub fn render_loop(app: &AndroidApp, window: &NativeWindow) -> i32 {
         }
 
         unsafe { clock_gettime(CLOCK_MONOTONIC as i32, &mut ts) };
-        let _elapsed = (ts.tv_sec as f64 + ts.tv_nsec as f64 * 1e-9) as f32;
-        
-        // render code happens here
+        let elapsed = (ts.tv_sec as f64 + ts.tv_nsec as f64 * 1e-9) as f32;
+
+        ctx.make_current();
+        ui.draw(freq, elapsed);
+        egl::swap_buffers(ctx.display, ctx.surface);
     }
 }
