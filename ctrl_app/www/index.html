@@ -10,6 +10,10 @@
 </head>
 <body>
 
+    <!-- Hidden: raw camera frame drawn here for OpenCV processing -->
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="feed-canvas"></canvas>
+
     <!-- ── Searching state ───────────────────────────────────────────────── -->
     <div id="screen-searching" class="screen active">
         <div class="pulse-ring"></div>
@@ -25,18 +29,40 @@
         <p class="status-sub">Connecting…</p>
     </div>
 
-    <!-- ── Connected / rotary state ──────────────────────────────────────── -->
+    <!-- ── Connected state ───────────────────────────────────────────────── -->
     <div id="screen-connected" class="screen">
+
+        <!-- Row 1: camera previews side by side -->
+        <div id="camera-row">
+            <canvas id="raw-canvas"></canvas>
+            <canvas id="warp-canvas"></canvas>
+        </div>
+
+        <!-- Row 2: dot visualization (angle driven by camera detection) -->
         <div id="canvas-wrap">
             <canvas id="input-canvas"></canvas>
         </div>
-        <div id="panel">
-            <div id="panel-label">encoder value</div>
-            <div id="panel-value">
-                <span id="indicator"></span>
-                <span id="value-display">0</span>
-                <span id="delta-display"></span>
+
+        <!-- Row 3: controls + readouts -->
+        <div id="controls-panel">
+            <div id="buttons">
+                <button id="mirror-btn">Mirror: OFF</button>
+                <button id="calibrate-btn">Calibrate</button>
+                <button id="focus-btn" style="display:none">Focus: Auto</button>
             </div>
+            <div id="focus-row" style="display:none">
+                <label id="focus-label">Focus</label>
+                <input id="focus-slider" type="range" step="any">
+            </div>
+            <div id="value-row">
+                <div id="panel-label">encoder value</div>
+                <div id="panel-value">
+                    <span id="indicator"></span>
+                    <span id="value-display">0</span>
+                    <span id="delta-display"></span>
+                </div>
+            </div>
+            <span id="status">Waiting for camera…</span>
         </div>
     </div>
 

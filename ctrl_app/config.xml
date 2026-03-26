@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="one.ohmst.demo1.ctrlapp" version="1.0.0"
         xmlns="http://www.w3.org/ns/widgets"
-        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+        xmlns:cdv="http://cordova.apache.org/ns/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
 
     <name>CtrlApp</name>
     <description>Control app — discovers AudioAppWS on the local network and connects via WebSocket.</description>
@@ -26,6 +27,9 @@
     <allow-navigation href="ws://*/*" />
 
     <platform name="android">
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.CAMERA" />
+        </config-file>
         <!-- Allow cleartext ws:// traffic (blocked by default on Android 9+) -->
         <edit-config file="app/src/main/AndroidManifest.xml"
                      target="/manifest/application"

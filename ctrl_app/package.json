@@ -14,15 +14,16 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "cordova-android": "^15.0.0",
-    "cordova-plugin-nsd-discovery": "plugin"
+    "cordova-plugin-android-permissions": "^1.1.5",
+    "cordova-plugin-nsd-discovery": "file:plugin"
   },
   "cordova": {
     "platforms": [
       "android"
     ],
     "plugins": {
-      "cordova-plugin-nsd-discovery": {}
+      "cordova-plugin-nsd-discovery": {},
+      "cordova-plugin-android-permissions": {}
     }
-  },
-  "dependencies": {}
+  }
 }
