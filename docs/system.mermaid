@@ -1,0 +1,16 @@
+flowchart TD
+    A[ArUco marker TUI] --> B(Phone camera)
+    B --> C[/Control App\]
+    C --> D[OpenCV]
+    D --Position\ncalculation--> F[Delta]
+    F --Websocket\nmessage--> J[Local network\nWebsocket server]
+    J --> R[/Audio app\]
+    R --> P[mDNS-SD\nBroadcast]
+    Q[mDNS-SD\nDiscovery] <--> P
+    C <--> H((GUI))
+    R --> K[State update]
+    K --> I((Visualizer))
+    K --> L((Audio\nsystem))
+    K --Websocket\nmessage--> J
+    Q <--> C
+    J --> C
